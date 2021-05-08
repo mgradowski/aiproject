@@ -1,0 +1,4 @@
+train: /tmp/fpds/train/
+val: /tmp/fpds/valid/
+nc: 2
+names: ['standing', 'fallen']
