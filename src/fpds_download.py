@@ -39,8 +39,8 @@ VALIDSET_FILENAME = 'valid.tar.gz'
 TESTSET_FILENAME = 'test.tar.gz'
 
 SPLITS = [
-    # ('train', TRAINSET_URL, TRAINSET_FILENAME),
-    # ('valid', VALIDSET_URL, VALIDSET_FILENAME),
+    ('train', TRAINSET_URL, TRAINSET_FILENAME),
+    ('valid', VALIDSET_URL, VALIDSET_FILENAME),
     ('test', TESTSET_URL, TESTSET_FILENAME),
 ]
 
