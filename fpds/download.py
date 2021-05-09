@@ -6,7 +6,7 @@ import argparse
 from PIL import Image
 
 parser = argparse.ArgumentParser('fpds_download')
-parser.add_argument('data_path', type=str, help='Data root directore e.g. /tmp/fpds.')
+parser.add_argument('data_path', type=str, help='Data root directory e.g. /tmp/fpds.')
 args = parser.parse_args()
 
 def transform(old_line, imwidth, imheight):
