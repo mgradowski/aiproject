@@ -62,7 +62,7 @@ async def amain(url: str):
 
 def main():
     parser = argparse.ArgumentParser('fpds.client')
-    parser.add_argument('url', type=str, required=True, help='WebSocket endpoint of fpds.server e.g. http://localhost:8080/fpds')
+    parser.add_argument('url', type=str, help='WebSocket endpoint of fpds.server e.g. http://localhost:8080/fpds')
     args = parser.parse_args()
     loop = asyncio.get_event_loop()
     task = loop.create_task(amain(args.url))
