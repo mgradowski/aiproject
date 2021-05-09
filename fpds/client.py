@@ -57,7 +57,7 @@ async def run_client(
 
 async def amain(url: str):
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as threadpool:
-        async with aiohttp.ClientSession() as session, session.ws_connect(utl) as ws:
+        async with aiohttp.ClientSession() as session, session.ws_connect(url) as ws:
             await run_client(ws, threadpool)
 
 def main():
