@@ -4,6 +4,8 @@ import pathlib
 import shutil
 import argparse
 from PIL import Image
+import progress.bar
+
 
 parser = argparse.ArgumentParser('fpds_download')
 parser.add_argument('data_path', type=str, help='Data root directory e.g. /tmp/fpds.')
@@ -24,9 +26,18 @@ def transform(old_line, imwidth, imheight):
 def download_file(url: str, filename: str) -> None:
     with requests.get(url, stream=True, allow_redirects=True) as r:
         r.raise_for_status()
+        bar = progress.bar.ShadyBar(max=int(r.headers['Content-Length']) // 1024**2, suffix='%(index)d/%(max)d MiB')
         with open(filename, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192): 
+            for chunk in r.iter_content(chunk_size=1024*1024): 
                 f.write(chunk)
+                bar.next()
+        bar.finish()
+
+def fixclass(line: str) -> str:
+    if line[:2] == '-1':
+        line = f'0{line[2:]}'
+    return line
+    
 
 DATA_ROOT_PATH = pathlib.Path(args.data_path)
 
@@ -58,20 +69,20 @@ for splitname, url, fname in SPLITS:
     # delete .tar.gz
     (DATA_ROOT_PATH / fname).unlink()
 
-    label_paths = (path for path in (DATA_ROOT_PATH / 'raw' / splitname).rglob('*.txt'))
+    label_paths = [path for path in (DATA_ROOT_PATH / 'raw' / splitname).rglob('*.txt')]
 
     print(f'INFO :: Transforming {splitname}.')
 
     (DATA_ROOT_PATH / splitname / 'labels').mkdir(parents=True)
     (DATA_ROOT_PATH / splitname / 'images').mkdir(parents=True)
 
+    bar = progress.bar.ShadyBar(max=len(label_paths), suffix='%(index)d/%(max)d')
+
     for path in label_paths:
+        bar.next()
         with open(path) as f:
             content = f.read().splitlines(keepends=False)
 
-        if content[:2] == '-1':
-            content = '0' + content[2:]
-        
         im_path = path.with_suffix('.png')
 
         try:
@@ -79,9 +90,9 @@ for splitname, url, fname in SPLITS:
                 width, height = im.width, im.height
 
         except FileNotFoundError:
-            print(f'INFO :: Missing image {im_path}.')
             continue
-
+        
+        content = map(fixclass, content)
         content = '\n'.join(transform(line, width, height) for line in content)
 
         with open(DATA_ROOT_PATH / splitname / 'labels' / path.name, mode='w') as f:
@@ -89,5 +100,8 @@ for splitname, url, fname in SPLITS:
         
         new_im_path = DATA_ROOT_PATH / splitname / 'images' / im_path.name
         im_path.link_to(new_im_path)
+    bar.finish()
 
+print(f'INFO :: Deleting raw data.')
 shutil.rmtree(DATA_ROOT_PATH / 'raw')
+print(f'INFO :: Finished.')

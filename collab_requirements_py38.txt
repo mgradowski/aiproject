@@ -1,3 +1,4 @@
 # fpds.download requires these packages, as well as Python >=3.8, which by default is unavailable on Google Collab
 Pillow
 requests
+progress
