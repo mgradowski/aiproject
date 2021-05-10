@@ -6,7 +6,7 @@ import argparse
 import numpy as np
 
 
-async def camera_source(queue: asyncio.Queue, threadpool: concurrent.futures.ThreadPoolExecutor, src_id: int=0):
+async def camera_source(ws: aiohttp.ClientWebSocketResponse, threadpool: concurrent.futures.ThreadPoolExecutor, src_id: int=0):
     loop = asyncio.get_running_loop()
     try:
         src = await loop.run_in_executor(threadpool, lambda: cv2.VideoCapture(src_id))
@@ -15,7 +15,7 @@ async def camera_source(queue: asyncio.Queue, threadpool: concurrent.futures.Thr
             im = cv2.resize(im, (640, 384))
             enc_param = [int(cv2.IMWRITE_JPEG_QUALITY), 40]
             _, im = await loop.run_in_executor(threadpool, lambda: cv2.imencode('.jpg', im, enc_param))
-            await queue.put(im.tobytes())
+            await ws.send_bytes(im.tobytes())
     except asyncio.CancelledError:
         pass
     finally:
@@ -40,15 +40,12 @@ async def run_client(
         threadpool: concurrent.futures.ThreadPoolExecutor
     ) -> None:
     # --
-    src_queue = asyncio.Queue(maxsize=1)
     dst_queue = asyncio.Queue(maxsize=1)
-    src_task = asyncio.create_task(camera_source(src_queue, threadpool))
+    src_task = asyncio.create_task(camera_source(ws, threadpool))
     dst_task = asyncio.create_task(preview_window(dst_queue, threadpool))
     try:
         while True:
-            im = await src_queue.get()
-            await ws.send_bytes(im)
-            im = await ws.receive_bytes(timeout=1.0)
+            im = await ws.receive_bytes()
             await dst_queue.put(im)
     except asyncio.CancelledError:
         await ws.send_str('close')

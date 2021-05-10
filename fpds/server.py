@@ -23,13 +23,7 @@ def process_test(im: bytes) -> bytes:
 
 def mk_process_yolo(yolofile):
     model = torch.load(yolofile)['model']
-
-    if torch.cuda.is_available():
-        device = torch.device('0')
-        model = model.half().fuse().to(device).autoshape()
-    else:
-        device = torch.device('cpu')
-        model = model.float().fuse().to(device).autoshape()
+    model = model.float().fuse().to('cuda' if torch.cuda.is_available() else 'cpu').autoshape()
     
     def process_func(im: bytes) -> bytes:
         im = np.frombuffer(im, dtype=np.uint8)
