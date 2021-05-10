@@ -7,8 +7,8 @@ from PIL import Image
 import progress.bar
 
 
-parser = argparse.ArgumentParser('fpds_download')
-parser.add_argument('data_path', type=str, help='Data root directory e.g. /tmp/fpds.')
+parser = argparse.ArgumentParser('fpds.download')
+parser.add_argument('data_path', type=pathlib.Path, help='Data root directory e.g. /tmp/fpds.')
 args = parser.parse_args()
 
 def transform(old_line, imwidth, imheight):
@@ -39,7 +39,7 @@ def fixclass(line: str) -> str:
     return line
     
 
-DATA_ROOT_PATH = pathlib.Path(args.data_path)
+DATA_ROOT_PATH = args.data_path
 
 TRAINSET_URL = 'https://universidaddealcala-my.sharepoint.com/:u:/g/personal/gram_uah_es/EXQImG_yi5xOifMZYz79_hcBlxATrYEZP5mCu-li4dcWDw?&Download=1'
 VALIDSET_URL = 'https://universidaddealcala-my.sharepoint.com/:u:/g/personal/gram_uah_es/EULm_4e4bgBKqnsTxDB5Br4BKf9rApBjYi7T0QrWyJrppw??&Download=1'

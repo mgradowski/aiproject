@@ -12,6 +12,7 @@ async def camera_source(queue: asyncio.Queue, threadpool: concurrent.futures.Thr
         src = await loop.run_in_executor(threadpool, lambda: cv2.VideoCapture(src_id))
         while True:
             _, im = await loop.run_in_executor(threadpool, src.read)
+            im = cv2.resize(im, (640, 384))
             enc_param = [int(cv2.IMWRITE_JPEG_QUALITY), 40]
             _, im = await loop.run_in_executor(threadpool, lambda: cv2.imencode('.jpg', im, enc_param))
             await queue.put(im.tobytes())
