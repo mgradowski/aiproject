@@ -22,8 +22,15 @@ def process_test(im: bytes) -> bytes:
     return im.tobytes()
 
 def mk_process_yolo(yolofile):
-    model = torch.load(yolofile)['model'].fuse().autoshape()
+    model = torch.load(yolofile)['model']
 
+    if torch.cuda.is_available():
+        device = torch.device('0')
+        model = model.half().fuse().to(device).autoshape()
+    else:
+        device = torch.device('cpu')
+        model = model.float().fuse().to(device).autoshape()
+    
     def process_func(im: bytes) -> bytes:
         im = np.frombuffer(im, dtype=np.uint8)
         im = cv2.imdecode(im, cv2.IMREAD_ANYCOLOR)
@@ -49,7 +56,7 @@ def mk_image_handler(threadpool: concurrent.futures.ThreadPoolExecutor, process_
                     await ws.close()
             elif msg.type == aiohttp.WSMsgType.BINARY:
                 response = await loop.run_in_executor(threadpool, lambda: process_func(msg.data))
-                await ws.send_bytes(response)
+                asyncio.create_task(ws.send_bytes(response))
             elif msg.type == aiohttp.WSMsgType.ERROR:
                 logging.info(f'WebSocket connection closed with exception {ws.exception()}')
 
@@ -72,7 +79,7 @@ def main() -> None:
             aiohttp.web.get('/test', mk_image_handler(threadpool, process_test)),
             aiohttp.web.get('/yolo', mk_image_handler(threadpool, process_yolo)),
         ])
-        aiohttp.web.run_app(app)
+        aiohttp.web.run_app(app, port=8181)
 
 if __name__ == '__main__':
     main()
